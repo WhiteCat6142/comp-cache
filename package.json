@@ -1,0 +1,27 @@
+{
+  "name": "comp-cache",
+  "version": "1.0.0",
+  "description": "Fastest&simple node.js compressed cache library",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WhiteCat6142/comp-cache.git"
+  },
+  "keywords": [
+    "simple",
+    "cache",
+    "compression"
+  ],
+  "author": "WhiteCat6142",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/WhiteCat6142/comp-cache/issues"
+  },
+  "homepage": "https://github.com/WhiteCat6142/comp-cache#readme",
+  "dependencies": {
+    "memory-cache": "^0.1.4"
+  }
+}
