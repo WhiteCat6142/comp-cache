@@ -11,6 +11,10 @@ The following http headers are supported:
    - Etag
    - Cache-Control
    - If-None-Match
+  - Timestamp
+   - Last-Modified
+   - If-Modified-Since
+   
 
 
 ## Install

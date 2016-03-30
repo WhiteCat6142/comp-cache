@@ -6,10 +6,14 @@ const crypto = require('crypto');
 
 function setHeaders(res,etag,option){
     res.setHeader("Etag",etag);
-    if(option&&option.type)res.setHeader("Content-Type",option.type);
     res.setHeader("Cache-Control","public, max-age=86400, must-revalidate");
     res.setHeader("Vary","Accept-Encoding");
+    if(option){
+        if(option.type)res.setHeader("Content-Type",option.type);
+        if(option.stamp)res.setHeader("Last-Modified",option.stamptext);
+    }
 }
+function getTime(d){return Math.round(d.getTime()/1000);}
 
 exports.expires=60*60*1000;//1h
 
@@ -25,6 +29,11 @@ exports.get = function(req,res,next){
             res.sendStatus(304);
             return;
         }
+        const stamp =req.headers["if-modified-since"];
+        if(x.option.stamp&&stamp&&x.option.stamp===Date.parse(stamp)){
+            res.sendStatus(304);
+            return;
+        }
         const encoding =req.headers['accept-encoding'];
         if(encoding&&encoding.indexOf("gzip")!=-1){
             res.setHeader("Content-Encoding","gzip");
@@ -36,16 +45,29 @@ exports.get = function(req,res,next){
         }
 };
 exports.put=function(req,res,next){
-   const option = {type:"text/html"};
    res.renderX=function(view,local){
        return res.render(view,local,function(err,html){
+           if(err)throw err;
+           const lm=res.getHeader('Last-Modified');
+           const n=(lm)?new Date(lm):new Date();
+           const option = {
+               type:"text/html",
+               stamp:getTime(n),
+               stamptext:n.toUTCString()
+            };
            const etag=exports.add(req.url,html,option);
            setHeaders(res,etag,option);
            res.end(html);
        });
     };
    res.endX=function(data){
-       const option={type:res.getHeader('content-type')};
+       const lm=res.getHeader('Last-Modified');
+       const n=(lm)?new Date(lm):new Date();
+       const option={
+           type:res.getHeader('content-type'),
+           stamp:getTime(n),
+           stamptext:n.toUTCString()
+        };
        const etag=exports.add(req.url,data,option);
        setHeaders(res,etag,option)
        return res.end(data);
