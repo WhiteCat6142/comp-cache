@@ -3,15 +3,15 @@ Fastest&amp;simple node.js compressed cache library
 
 The following http headers are supported:
 
-  - gzip
+  * gzip
    - Accept-Encoding
    - Content-Encoding
    - Vary
-  - etag
+  * etag
    - Etag
    - Cache-Control
    - If-None-Match
-  - Timestamp
+  * Timestamp
    - Last-Modified
    - If-Modified-Since
    
@@ -38,9 +38,12 @@ the middleware that will append those methods to Express's Response object.
 #### renderX(view,[locals])
 the method that is almost same as res.render except adding data to cache space.
 
+#### writeX(data)
+the method that is almost same as res.write except affecting endX instead of res.end. 
+
 #### endX(data)
 the method that is almost same as res.end except adding data to cache space. 
-warming: it doesn't sense other methods like re.write .
+warming: use writeX instead of write.
 
 ### add(url,data,[option])
 the method that add data to cache space.
@@ -49,6 +52,9 @@ the method that add data to cache space.
 
 ##### type
 means "Content-type" in http header.
+
+#### stamp
+means unix-time of "Last-Modified" in http header.
 
 ### clear()
 the method that reset all caches.

@@ -7,13 +7,12 @@ const crypto = require('crypto');
 function setHeaders(res,etag,option){
     res.setHeader("Etag",etag);
     res.setHeader("Cache-Control","public, max-age=86400, must-revalidate");
-    res.setHeader("Vary","Accept-Encoding");
+    res.vary("Accept-Encoding");
     if(option){
-        if(option.type)res.setHeader("Content-Type",option.type);
+        if(option.type)res.type(option.type);
         if(option.stamp)res.setHeader("Last-Modified",option.stamptext);
     }
 }
-function getTime(d){return Math.round(d.getTime()/1000);}
 
 exports.expires=60*60*1000;//1h
 
@@ -45,27 +44,27 @@ exports.get = function(req,res,next){
         }
 };
 exports.put=function(req,res,next){
+   var buf=[];
    res.renderX=function(view,local){
        return res.render(view,local,function(err,html){
            if(err)throw err;
-           const lm=res.getHeader('Last-Modified');
-           const n=(lm)?new Date(lm):new Date();
-           const option = {
-               type:"text/html",
-               stamp:getTime(n),
-               stamptext:n.toUTCString()
-            };
-           const etag=exports.add(req.url,html,option);
-           setHeaders(res,etag,option);
-           res.end(html);
+           res.setHeader('Content-Type','text/html')
+           res.endX(html);
        });
     };
+   res.writeX=function(data) {
+       buf.push(new Buffer(data));
+   }
    res.endX=function(data){
+       if(buf.length>0){
+           if(data)buf.push(new Buffer(data));
+           data=Buffer.concat(buf);
+       }
        const lm=res.getHeader('Last-Modified');
        const n=(lm)?new Date(lm):new Date();
        const option={
            type:res.getHeader('content-type'),
-           stamp:getTime(n),
+           stamp:Math.round(n.getTime()/1000),
            stamptext:n.toUTCString()
         };
        const etag=exports.add(req.url,data,option);
