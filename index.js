@@ -60,6 +60,7 @@ exports.put=function(req,res,next){
            if(data)buf.push(new Buffer(data));
            data=Buffer.concat(buf);
        }
+       if(!data){res.end();return;}
        const lm=res.getHeader('Last-Modified');
        const n=(lm)?new Date(lm):new Date();
        const option={

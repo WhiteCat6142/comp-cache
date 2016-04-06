@@ -41,7 +41,7 @@ the method that is almost same as res.render except adding data to cache space.
 #### writeX(data)
 the method that is almost same as res.write except affecting endX instead of res.end. 
 
-#### endX(data)
+#### endX([data])
 the method that is almost same as res.end except adding data to cache space. 
 warming: use writeX instead of write.
 
