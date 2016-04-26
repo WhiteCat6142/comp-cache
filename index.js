@@ -44,9 +44,10 @@ exports.get = function(req,res,next){
         }
 };
 exports.put=function(req,res,next){
-   var buf=[];
+   const buf=[];
    res.renderX=function(view,local){
        return res.render(view,local,function(err,html){
+           console.log(err)
            if(err)throw err;
            res.setHeader('Content-Type','text/html')
            res.endX(html);
@@ -60,7 +61,10 @@ exports.put=function(req,res,next){
            if(data)buf.push(new Buffer(data));
            data=Buffer.concat(buf);
        }
-       if(!data){res.end();return;}
+       if(!data){
+        res.end();
+        return;
+       }
        const lm=res.getHeader('Last-Modified');
        const n=(lm)?new Date(lm):new Date();
        const option={
@@ -68,9 +72,12 @@ exports.put=function(req,res,next){
            stamp:Math.round(n.getTime()/1000),
            stamptext:n.toUTCString()
         };
-       const etag=exports.add(req.url,data,option);
-       setHeaders(res,etag,option)
-       return res.end(data);
+    const etag = "W/\""+crypto.createHash('md5').update(data, 'utf8').digest('hex')+"\"";
+    zlib.gzip(new Buffer(data),function (err, binary) {
+        if(err)console.log(err);
+        cache.put(req.url,{body:binary,etag:etag,option:option},exports.expires);
+        exports.get(req,res);
+    });
    };
    next();
 };
