@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/WhiteCat6142/comp-cache#readme",
   "dependencies": {
-    "memory-cache": "^0.1.4"
+    "memory-cache": "^0.1.4",
+    "stream-buffers": "^3.0.0"
   }
 }

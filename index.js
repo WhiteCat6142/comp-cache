@@ -3,6 +3,7 @@
 const zlib = require('zlib');
 const cache = require('memory-cache');
 const crypto = require('crypto');
+const streamBuffers = require('stream-buffers');
 
 function setHeaders(res,etag,option){
     res.setHeader("Etag",etag);
@@ -38,33 +39,37 @@ exports.get = function(req,res,next){
             res.setHeader("Content-Encoding","gzip");
             res.end(x.body);
         }else{
-            zlib.gunzip(x.body, function (err, binary) {
-                res.end(binary);
-            });
+            const gzip = zlib.createGunzip();
+            const inp = new streamBuffers.ReadableStreamBuffer();
+            inp.put(x.body);
+            inp.stop();
+            inp.pipe(gzip).pipe(res);
         }
 };
 exports.put=function(req,res,next){
-   const buf=[];
+   var g=zlib.createGzip({level:zlib.Z_BEST_COMPRESSION});
+   var out=new streamBuffers.WritableStreamBuffer();
+   g.pipe(out);
+   var md=crypto.createHash('md5');
    res.renderX=function(view,local){
        return res.render(view,local,function(err,html){
-           console.log(err)
            if(err)throw err;
            res.setHeader('Content-Type','text/html')
            res.endX(html);
        });
     };
    res.writeX=function(data) {
-       buf.push(new Buffer(data));
-   }
+       const d =new Buffer(data);
+       g.write(d);
+       md.update(d);
+   };
    res.endX=function(data){
-       if(buf.length>0){
-           if(data)buf.push(new Buffer(data));
-           data=Buffer.concat(buf);
+       if(data){
+       const d =new Buffer(data);
+       g.write(d);
+       md.update(d);
        }
-       if(!data){
-        res.end();
-        return;
-       }
+       g.end();
        const lm=res.getHeader('Last-Modified');
        const n=(lm)?new Date(lm):new Date();
        const option={
@@ -72,12 +77,13 @@ exports.put=function(req,res,next){
            stamp:Math.round(n.getTime()/1000),
            stamptext:n.toUTCString()
         };
-    const etag = "W/\""+crypto.createHash('md5').update(data, 'utf8').digest('hex')+"\"";
-    zlib.gzip(new Buffer(data),function (err, binary) {
-        if(err)console.log(err);
-        cache.put(req.url,{body:binary,etag:etag,option:option},exports.expires);
+    const etag = "W/\""+md.digest('hex')+"\"";
+    g.flush(function() {
+        out.on('finish',function() {
+        cache.put(req.url,{body:out.getContents(),etag:etag,option:option},exports.expires);
         exports.get(req,res);
-    });
+        });
+        });
    };
    next();
 };

@@ -63,6 +63,49 @@ the method that reset all caches.
 the field that decide the deadline of cached data.(ms)
 defalut: 1 hour
 
+## example
+
+```js
+"use strict";
+
+const http = require('http');
+const express = require('express');
+const app = express();
+const compression = require('compression');
+const logger = require("morgan");
+const cache = require("comp-cache");
+
+//logger first
+app.use(logger('dev'));
+
+//set get&put
+app.use(cache.get);
+app.use(cache.put);
+
+//clear at update
+updater.on("update",cache.clear);
+
+//compression should be after
+app.use(compression({threshold:0}));
+
+//heavy job you wanna cache
+app.get('/test',function(req,res){
+  res.setHeader('Last-Modified',new Date().toUTCString());
+  res.type("text/plain; charset=utf-8");
+  for(var i=0;i<10;i++){res.writeX("0"+i);}
+  res.endX("10");
+});
+
+//you can use also noncache data
+app.get('/nocache',function(req,res){
+  for(var i=0;i<10;i++){res.write("0"+i);}
+  res.end("10");
+});
+
+http.createServer(app).listen(3000, function(){
+  console.log("Express server started");
+});
+```
 
 ## License
 
